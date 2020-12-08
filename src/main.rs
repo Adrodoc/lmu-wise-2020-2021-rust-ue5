@@ -79,8 +79,8 @@ impl PartialEq for HuffTree {
 }
 
 // Build a Huffmann tree by iteratively combining two minimal elements.
-fn huffman(occ: BTreeMap<char, u32>) -> Option<HuffTree> {
-    let mut heap = occ
+fn huffman(frequency: BTreeMap<char, u32>) -> Option<HuffTree> {
+    let mut heap = frequency
         .into_iter()
         .map(|(chr, occ)| HuffTree::new(chr, occ))
         .collect::<BinaryHeap<_>>();
@@ -118,18 +118,18 @@ fn codebook(huff: &HuffTree) -> Codebook {
 }
 
 // Given a message m, encode returns the Huffman encoded message.
-fn encode(m: &str) -> Option<(Codebook, BitVec)> {
-    let frequency = frequency(&mut m.chars());
+fn encode(message: &str) -> Option<(Codebook, BitVec)> {
+    let frequency = frequency(&mut message.chars());
     huffman(frequency).map(|tree| {
         println!("{}", tree);
         let book = codebook(&tree);
-        let bits = m.chars().flat_map(|c| book[&c].clone()).collect();
+        let bits = message.chars().flat_map(|c| book[&c].clone()).collect();
         (book, bits)
     })
 }
 
-fn frequency<T: Ord, I: Iterator<Item = T>>(vec: &mut I) -> BTreeMap<T, u32> {
-    vec.fold(BTreeMap::new(), |mut map, element| {
+fn frequency<T: Ord, I: Iterator<Item = T>>(iter: &mut I) -> BTreeMap<T, u32> {
+    iter.fold(BTreeMap::new(), |mut map, element| {
         *map.entry(element).or_default() += 1;
         map
     })
@@ -137,8 +137,8 @@ fn frequency<T: Ord, I: Iterator<Item = T>>(vec: &mut I) -> BTreeMap<T, u32> {
 
 fn main() {
     let examples = vec!["BACADAEAFABBAAAGAH", "aardvarks ate apples around aachen"];
-    for input in examples {
-        if let Some((cb, cs)) = encode(input) {
+    for message in examples {
+        if let Some((cb, cs)) = encode(message) {
             for (chr, bitvec) in &cb {
                 println!("{}: {}", chr, bitvec_str(bitvec));
             }
