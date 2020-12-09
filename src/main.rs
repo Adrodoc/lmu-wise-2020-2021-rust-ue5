@@ -44,16 +44,19 @@ impl HuffTree {
     }
 }
 
+const INDENT: &str = "  ";
 impl Display for HuffTree {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        fn fmt_prefixed(s: &HuffTree, f: &mut Formatter<'_>, prefix: usize) -> Result {
+        fn fmt_prefixed(s: &HuffTree, f: &mut Formatter<'_>, depth: usize) -> Result {
             match s {
-                HuffTree::Leaf { chr, occ } => write!(f, "{}{}: {}", "  ".repeat(prefix), chr, occ),
+                HuffTree::Leaf { chr, occ } => {
+                    write!(f, "{}{}: {}", INDENT.repeat(depth), chr, occ)
+                }
                 HuffTree::Node { left, right } => {
-                    write!(f, "{}left:\n", "  ".repeat(prefix))?;
-                    fmt_prefixed(left, f, prefix + 1)?;
-                    write!(f, "\n{}right:\n", "  ".repeat(prefix))?;
-                    fmt_prefixed(right, f, prefix + 1)
+                    write!(f, "{}left:\n", INDENT.repeat(depth))?;
+                    fmt_prefixed(left, f, depth + 1)?;
+                    write!(f, "\n{}right:\n", INDENT.repeat(depth))?;
+                    fmt_prefixed(right, f, depth + 1)
                 }
             }
         }
@@ -63,7 +66,7 @@ impl Display for HuffTree {
 
 impl Ord for HuffTree {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.lettercount().cmp(&self.lettercount())
+        self.lettercount().cmp(&other.lettercount()).reverse()
     }
 }
 impl PartialOrd for HuffTree {
@@ -120,12 +123,10 @@ fn codebook(huff: &HuffTree) -> Codebook {
 // Given a message m, encode returns the Huffman encoded message.
 fn encode(message: &str) -> Option<(Codebook, BitVec)> {
     let frequency = frequency(&mut message.chars());
-    huffman(frequency).map(|tree| {
-        println!("{}", tree);
-        let book = codebook(&tree);
-        let bits = message.chars().flat_map(|c| book[&c].clone()).collect();
-        (book, bits)
-    })
+    let tree = huffman(frequency)?;
+    let book = codebook(&tree);
+    let bits = message.chars().flat_map(|c| book[&c].clone()).collect();
+    Some(book, bits)
 }
 
 fn frequency<T: Ord, I: Iterator<Item = T>>(iter: &mut I) -> BTreeMap<T, u32> {
