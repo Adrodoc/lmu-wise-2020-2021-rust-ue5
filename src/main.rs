@@ -91,7 +91,7 @@ fn huffman(frequency: BTreeMap<char, u32>) -> Option<HuffTree> {
     loop {
         match (heap.pop(), heap.pop()) {
             (Some(first), Some(second)) => heap.push(first.merge(second)),
-            (first, _) => return first,
+            (first, _) => break first,
         }
     }
 }
