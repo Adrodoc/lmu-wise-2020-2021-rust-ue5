@@ -123,10 +123,30 @@ fn codebook(huff: &HuffTree) -> Codebook {
 // Given a message m, encode returns the Huffman encoded message.
 fn encode(message: &str) -> Option<(Codebook, BitVec)> {
     let frequency = frequency(&mut message.chars());
-    let tree = huffman(frequency)?;
-    let book = codebook(&tree);
-    let bits = message.chars().flat_map(|c| book[&c].clone()).collect();
-    Some(book, bits)
+    let hufftree = huffman(frequency)?;
+    println!("{}", hufftree);
+    let codebook = codebook(&hufftree);
+    let bits = message.chars().flat_map(|c| codebook[&c].clone()).collect();
+    Some((codebook, bits))
+}
+
+fn decode(codebook: &Codebook, mut bits: &[bool]) -> String {
+    let mut decoded = String::new();
+    while !bits.is_empty() {
+        let mut found = false;
+        for (chr, code) in codebook {
+            if bits.starts_with(code) {
+                decoded.push(*chr);
+                bits = &bits[code.len()..];
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            panic!("No entry in code")
+        }
+    }
+    decoded
 }
 
 fn frequency<T: Ord, I: Iterator<Item = T>>(iter: &mut I) -> BTreeMap<T, u32> {
@@ -144,6 +164,7 @@ fn main() {
                 println!("{}: {}", chr, bitvec_str(bitvec));
             }
             println!("String: {}\n", bitvec_str(&cs));
+            println!("Decoded: {}\n", decode(&cb, &cs));
         }
     }
 }
